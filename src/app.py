@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import os
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
@@ -75,6 +75,24 @@ def weather_records():
     for rec in all_weather:
         output += f"Time: {rec.datetime.strftime('%Y-%m-%d %H:%M')}, Temp: {rec.temperature}°C<br>"
     return output
+
+@app.route('/average/<start_date>/<end_date>')
+def average_temperature(start_date, end_date):
+    records = Weather.query.filter(
+        Weather.datetime >= start_date,
+        Weather.datetime <= end_date
+    ).all()
+
+    if not records:
+        return jsonify({"error": "No records found"}), 404
+
+    avg_temp = sum(r.temperature for r in records) / len(records)
+
+    return jsonify({
+        "start_date": start_date,
+        "end_date": end_date,
+        "average_temperature": avg_temp
+    })
 
 def calc_health_score(sleep_hours, water_ml):
     """
